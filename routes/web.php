@@ -40,7 +40,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/transfer',                         [TransferController::class, 'send'])->name('transfer.send');
     Route::get('/transfer/receipt/{transactionId}',  [TransferController::class, 'receipt'])->name('transfer.receipt');
 
-    // ── Bank Transfer — receipt & banks BEFORE dynamic routes
      // ── Bank Transfer — receipt & banks BEFORE dynamic routes
     Route::get('/transfer/bank',                          [BankTransferController::class, 'index'])->name('transfer.bank');
     Route::post('/transfer/bank/account',                 [BankTransferController::class, 'addAccount'])->name('transfer.bank.addAccount');
