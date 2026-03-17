@@ -1,0 +1,139 @@
+# CashBytes API Documentation
+Base URL: http://127.0.0.1:8000/api/v1
+
+## Authentication
+All protected routes require:
+    Header: Authorization: Bearer {token}
+    Header: Accept: application/json
+
+## Response Format
+All responses follow this structure:
+{
+    "success": true | false,
+    "message": "...",
+    "data": { ... }        // on success
+    "errors": { ... }      // on validation failure
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AUTH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+POST /register
+Body: { name, contact_no, email, password, password_confirmation }
+Returns: user, wallet, token
+
+POST /login                         (throttle: 5/min)
+Body: { email, password }
+Returns: user, wallet, token
+
+POST /logout                        [Auth required]
+Revokes current token
+
+POST /logout-all                    [Auth required]
+Revokes all tokens (all devices)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WALLET
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GET /wallet                         [Auth required]
+Returns: balance, currency, recent_transactions (last 5)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FUND TRANSFER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+POST /transfer                      [Auth required]
+Body: { receiver_contact, amount, note? }
+  - receiver_contact: mobile number or email of recipient
+Returns: transaction, receiver name, new_balance
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SAVINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GET /savings                        [Auth required]
+Returns: all goals with progress %
+
+POST /savings                       [Auth required]
+Body: { name, category, target_amount, target_date? }
+  - category: Travel | Tuition | Shopping | Custom
+Returns: created goal
+
+GET /savings/{goalId}               [Auth required]
+Returns: goal details + allocation history
+
+POST /savings/{goalId}/allocate     [Auth required]
+Body: { amount }
+Returns: transaction, updated goal, new_balance
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BUY LOAD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GET /load/networks                  [Auth required]
+Returns: all networks and their promos with codes and amounts
+
+POST /load                          [Auth required]
+Body: { mobile_number, network, promo_code, amount }
+  - network: Globe | Smart | DITO | TNT | Sun
+  - mobile_number: must start with 09, 11 digits
+Returns: transaction, load details, new_balance
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PAY BILLS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GET /bills                          [Auth required]
+Query params: ?category=Electric&search=meralco
+Returns: billers grouped by category
+
+GET /bills/{billerId}               [Auth required]
+Returns: biller info + last used account number
+
+POST /bills/pay                     [Auth required]
+Body: { biller_id, account_number, amount }
+Returns: transaction, bill details, confirmation_no, new_balance
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TRANSACTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GET /transactions                   [Auth required]
+Query params:
+  ?type=transfer|save|load|bill_payment
+  ?direction=debit|credit
+  ?status=completed|pending|failed
+  ?date_from=2026-01-01
+  ?date_to=2026-03-31
+  ?search=REF123
+  ?per_page=15 (max 100)
+Returns: paginated transactions + summary totals
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROFILE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+GET /profile                        [Auth required]
+Returns: user info, wallet, stats
+
+PUT /profile                        [Auth required]
+Body: { name, contact_no, email }
+Returns: updated user
+
+PUT /profile/password               [Auth required]
+Body: { current_password, password, password_confirmation }
+Note: Revokes ALL tokens after password change
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HTTP STATUS CODES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+200 - OK
+201 - Created
+400 - Bad Request
+401 - Unauthorized (invalid/missing token)
+404 - Not Found
+422 - Validation Error / Business Logic Error
+429 - Too Many Requests (rate limited)
+500 - Server Error
