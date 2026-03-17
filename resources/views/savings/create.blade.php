@@ -93,6 +93,7 @@ function toggleCustomCategory(value) {
     const group = document.getElementById('custom-category-group');
     const input = document.getElementById('custom-category-input');
 
+
     if (value === 'Custom') {
         group.style.display = 'block';
         input.required = true;
